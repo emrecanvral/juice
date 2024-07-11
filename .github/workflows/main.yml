@@ -32,6 +32,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install semgrep
+        run: |
+          python -m pip install semgrep
+
       - name: Semgrep Scan
         continue-on-error: true
         run: |
@@ -46,13 +55,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
+      - name: Build project with Maven
+        run: mvn clean install
+
       - name: Run OWASP Dependency Check
         uses: dependency-check/Dependency-Check_Action@main
         with:
-          project: 'Juice Shop'
-          path: '.'
           format: 'JSON'
-          out: 'results/dependency-check-report.json'
+          out: 'results'
           args: '--failOnCVSS 7 --enableRetired'
 
   container_scan:
@@ -105,7 +115,7 @@ jobs:
         run: cp results/dependency-check-report.json results/
 
       - name: Upload Container Scan results
-        run: cp results/grype-results.json results/  # Replace with your actual container scan result file
+        run: cp results/grype-results.json results/
 
       - name: Upload Secret Scan results
         run: cp results/gitleaks-results.json results/
