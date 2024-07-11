@@ -50,44 +50,52 @@ jobs:
   sca_scan:
     runs-on: ubuntu-latest
     needs: sast_scan
-
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v2
-
-      - name: Download and Run Dependency-Check
-        run: |
-          VERSION=$(curl -s https://jeremylong.github.io/DependencyCheck/current.txt)
-          curl -Ls "https://github.com/jeremylong/DependencyCheck/releases/download/v${VERSION}/dependency-check-${VERSION}-release.zip" --output dependency-check.zip
-          unzip dependency-check.zip -d dependency-check
-          rm dependency-check.zip
-          mkdir -p results
-          ./dependency-check/bin/dependency-check.sh --project "Juice Shop" --scan . --format JSON --out results/dependency-check-report.json || true
-
+      - name: Depcheck
+        uses: dependency-check/Dependency-Check_Action@1.1.0
+        id: Depcheck
+        with:
+          project: 'test'
+          path: '.'
+          format: 'HTML'
+          out: 'reports' # this is the default, no need to specify unless you wish to override it
+          args: >
+            --failOnCVSS 7
+            --enableRetired
+      - name: Upload Test results
+        uses: actions/upload-artifact@master
+        with:
+           name: Depcheck report
+           path: ${{github.workspace}}/reports
+            
 
 
 
   container_scan:
     runs-on: ubuntu-latest
     needs: sca_scan
-
+    permissions:
+      contents: read # for actions/checkout to fetch code
+      security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
+      actions: read # only required for a private repository by github/codeql-action/upload-sarif to get the Action run status
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-
-      - name: Build the Container image
-        run: docker build . --file Dockerfile --tag localbuild/juice:latest
-
-      - name: Scan container image with Anchore
-        uses: anchore/scan-action@v3
-        with:
-          image: "localbuild/juice:latest"
-          fail-build: false
-
-      - name: Upload Anchore scan SARIF report
-        uses: github/codeql-action/upload-sarif@v2
-        with:
-          sarif_file: ${{ steps.scan.outputs.sarif }}
+    - name: Check out the code
+      uses: actions/checkout@v4
+    - name: Build the Docker image
+      run: docker build . --file Dockerfile --tag localbuild/juice:latest
+    - name: Run the Anchore Grype scan action
+      uses: anchore/scan-action@d5aa5b6cb9414b0c7771438046ff5bcfa2854ed7
+      id: scan
+      with:
+        image: "localbuild/juice:latest"
+        fail-build: false
+        severity-cutoff: critical
+    - name: Upload vulnerability report
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: ${{ steps.scan.outputs.sarif }}
 
   secret_scan:
     runs-on: ubuntu-latest
@@ -103,27 +111,4 @@ jobs:
         with:
           args: "--path . --report-format json --report-path results/gitleaks-results.json"
 
-  upload_results:
-    runs-on: ubuntu-latest
-    needs: [build, sast_scan, sca_scan, container_scan, secret_scan]
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-
-      - name: Upload SAST results
-        run: cp results/semgrep_results.json results/
-
-      - name: Upload SCA results
-        run: cp results/dependency-check-report.json results/
-
-      - name: Upload Container Scan results
-        run: cp results/*.json results/grype-results.json
-
-      - name: Upload Secret Scan results
-        run: cp results/gitleaks-results.json results/
-
-      - name: Upload results to GitHub Security Dashboard
-        uses: github/codeql-action/upload-sarif@v1
-        with:
-          sarif_file: results/semgrep_results.json
+  
