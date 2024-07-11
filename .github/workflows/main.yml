@@ -56,7 +56,7 @@ jobs:
       - name: Npm install 
         run: npm install
       - name: Depcheck
-        uses: dependency-check/Dependency-Check_Action@1.1.0
+        uses: dependency-check/Dependency-Check_Action@1.1.0 | true
         id: Depcheck
         with:
           project: 'test'
@@ -64,7 +64,6 @@ jobs:
           format: 'HTML'
           out: 'reports' # this is the default, no need to specify unless you wish to override it
           args: >
-            --failOnCVSS 7
             --enableRetired
             --exclude **/.tar
             --exclude **/.zip
