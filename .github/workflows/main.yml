@@ -26,21 +26,18 @@ jobs:
 
   sast_scan:
     runs-on: ubuntu-latest
-    needs: build
-
+    container: 
+      image: returntocorp/semgrep:latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Run Semgrep
-        uses: returntocorp/semgrep-action@v1
-        with:
-          config: auto
-          continue-on-error: true 
-      - name: Save Semgrep results
+      - name: Semgrep Scan
+        continue-on-error: true
         run: |
           mkdir -p results
-          semgrep --config auto --json > results/semgrep_results.json || true  
+          semgrep --config auto --json > results/semgrep_results.json 
+   
 
   sca_scan:
     runs-on: ubuntu-latest
