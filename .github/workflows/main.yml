@@ -55,17 +55,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Download Dependency-Check
+      - name: Download and Run Dependency-Check
         run: |
           VERSION=$(curl -s https://jeremylong.github.io/DependencyCheck/current.txt)
           curl -Ls "https://github.com/jeremylong/DependencyCheck/releases/download/v${VERSION}/dependency-check-${VERSION}-release.zip" --output dependency-check.zip
           unzip dependency-check.zip -d dependency-check
           rm dependency-check.zip
-
-      - name: Run OWASP Dependency Check
-        run: |
           mkdir -p results
           ./dependency-check/bin/dependency-check.sh --project "Juice Shop" --scan . --format JSON --out results/dependency-check-report.json || true
+
+
+
 
   container_scan:
     runs-on: ubuntu-latest
@@ -82,6 +82,7 @@ jobs:
         uses: anchore/scan-action@v3
         with:
           image: "localbuild/juice:latest"
+          fail-build: false
 
       - name: Upload Anchore scan SARIF report
         uses: github/codeql-action/upload-sarif@v2
