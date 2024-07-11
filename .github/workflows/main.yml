@@ -24,9 +24,6 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Start application
-        run: npm start
-
   sast_scan:
     runs-on: ubuntu-latest
     needs: build
@@ -39,12 +36,11 @@ jobs:
         uses: returntocorp/semgrep-action@v1
         with:
           config: auto
-          continue-on-error: true  # Devam etmek için hata durumunu işaret eder
-
+          continue-on-error: true 
       - name: Save Semgrep results
         run: |
           mkdir -p results
-          semgrep --config auto --json > results/semgrep_results.json || true  # Hata durumunda pipeline'i kırma
+          semgrep --config auto --json > results/semgrep_results.json || true  
 
   sca_scan:
     runs-on: ubuntu-latest
@@ -76,8 +72,7 @@ jobs:
         uses: anchore/grype-action@v0.10.0
 
       - name: Scan for vulnerabilities with Grype
-        run: grype . -o json > results/grype-results.json || true  # Hata durumunda pipeline'i kırma
-
+        run: grype . -o json > results/grype-results.json || true 
   secret_scan:
     runs-on: ubuntu-latest
     needs: container_scan
@@ -90,7 +85,7 @@ jobs:
         uses: zricethezav/gitleaks-action@v1.1.5
         with:
           args: "--path . --report-format json --report-path results/gitleaks-results.json"
-        continue-on-error: true  # Devam etmek için hata durumunu işaret eder
+        continue-on-error: true  
 
   upload_results:
     runs-on: ubuntu-latest
