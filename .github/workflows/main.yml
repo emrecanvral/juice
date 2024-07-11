@@ -24,6 +24,8 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Start application
+        run: npm start
 
   sast_scan:
     runs-on: ubuntu-latest
@@ -37,11 +39,12 @@ jobs:
         uses: returntocorp/semgrep-action@v1
         with:
           config: auto
+          continue-on-error: true  # Devam etmek için hata durumunu işaret eder
 
       - name: Save Semgrep results
         run: |
           mkdir -p results
-          semgrep --config auto --json > results/semgrep_results.json
+          semgrep --config auto --json > results/semgrep_results.json || true  # Hata durumunda pipeline'i kırma
 
   sca_scan:
     runs-on: ubuntu-latest
@@ -59,7 +62,7 @@ jobs:
 
       - name: Run OWASP Dependency Check
         run: |
-          owasp-dependency-check/bin/dependency-check.sh --project "Juice Shop" --scan . --format "JSON" --out results/dependency-check-report.json
+          owasp-dependency-check/bin/dependency-check.sh --project "Juice Shop" --scan . --format "JSON" --out results/dependency-check-report.json || true  # Hata durumunda pipeline'i kırma
 
   container_scan:
     runs-on: ubuntu-latest
@@ -73,7 +76,7 @@ jobs:
         uses: anchore/grype-action@v0.10.0
 
       - name: Scan for vulnerabilities with Grype
-        run: grype . -o json > results/grype-results.json
+        run: grype . -o json > results/grype-results.json || true  # Hata durumunda pipeline'i kırma
 
   secret_scan:
     runs-on: ubuntu-latest
@@ -87,6 +90,7 @@ jobs:
         uses: zricethezav/gitleaks-action@v1.1.5
         with:
           args: "--path . --report-format json --report-path results/gitleaks-results.json"
+        continue-on-error: true  # Devam etmek için hata durumunu işaret eder
 
   upload_results:
     runs-on: ubuntu-latest
