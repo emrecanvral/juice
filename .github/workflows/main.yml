@@ -1,4 +1,5 @@
 name: Juice Shop CI/CD Case DevSecOps Pipeline
+
 on:
   push:
     branches:
@@ -6,23 +7,104 @@ on:
   pull_request:
     branches:
       - main
+
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v2
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '18'
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
 
-    - name: Install dependencies
-      run: npm install
+      - name: Install dependencies
+        run: npm install
 
-    - name: Start application
-      run: npm start
 
-  
+  sast_scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Run Semgrep
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: auto
+
+      - name: Save Semgrep results
+        run: |
+          mkdir -p results
+          semgrep --config auto --json > results/semgrep_results.json
+
+  sca_scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Install OWASP Dependency Check
+        run: |
+          curl -sSLO https://github.com/jeremylong/DependencyCheck/releases/download/v6.5.1/dependency-check-6.5.1-release.zip
+          unzip dependency-check-6.5.1-release.zip -d /usr/local/bin/
+          mv /usr/local/bin/dependency-check /usr/local/bin/owasp-dependency-check
+
+      - name: Run OWASP Dependency Check
+        run: |
+          owasp-dependency-check/bin/dependency-check.sh --project "Juice Shop" --scan . --format "JSON" --out results/dependency-check-report.json
+
+  container_scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Grype
+        uses: anchore/grype-action@v0.10.0
+
+      - name: Scan for vulnerabilities with Grype
+        run: grype . -o json > results/grype-results.json
+
+  secret_scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Run Gitleaks
+        uses: zricethezav/gitleaks-action@v1.1.5
+        with:
+          args: "--path . --report-format json --report-path results/gitleaks-results.json"
+
+  upload_results:
+    runs-on: ubuntu-latest
+    needs: [build, sast_scan, sca_scan, container_scan, secret_scan]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Upload SAST results
+        run: cp results/semgrep_results.json results/
+
+      - name: Upload SCA results
+        run: cp results/dependency-check-report.json results/
+
+      - name: Upload Container Scan results
+        run: cp results/grype-results.json results/
+
+      - name: Upload Secret Scan results
+        run: cp results/gitleaks-results.json results/
+
+      - name: Upload results to GitHub Security Dashboard
+        uses: github/codeql-action/upload-sarif@v1
+        with:
+          sarif_file: results/semgrep_results.json
