@@ -79,13 +79,11 @@ jobs:
     needs: container_scan
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-
-      - name: Run Gitleaks
-        continue-on-error: true
-        uses: zricethezav/gitleaks-action@v1.1.5
+      - uses: actions/checkout@v4
         with:
-          args: "--path . --report-format json --report-path results/gitleaks-results.json"
-
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        
   
