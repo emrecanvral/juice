@@ -44,8 +44,20 @@ jobs:
       - name: Semgrep Scan
         continue-on-error: true
         run: |
-          mkdir -p results
-          semgrep --config auto --json > results/semgrep_results.json 
+          semgrep -q --sarif --config auto > semgrep-results.sarif 
+      
+      - name: Save SARIF results as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: semgrep-scan-results
+          path: semgrep-results.sarif
+
+      # Upload SARIF file generated in previous step
+      - name: Upload SARIF result to the GitHub Security Dashboard
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: semgrep-results.sarif
+        if: always()
 
 
   
@@ -85,5 +97,8 @@ jobs:
       - uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN }}
-        
-  
+      
+      - name: Upload vulnerability report
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: ${{ steps.scan.outputs.sarif }}
