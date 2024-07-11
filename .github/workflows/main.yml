@@ -26,6 +26,7 @@ jobs:
 
   sast_scan:
     runs-on: ubuntu-latest
+    needs: build
     container: 
       image: returntocorp/semgrep:latest
     steps:
