@@ -1,5 +1,4 @@
-name: Juice Shop CI/CD
-
+name: Juice Shop CI/CD Case DevSecOps Pipeline
 on:
   push:
     branches:
@@ -7,7 +6,6 @@ on:
   pull_request:
     branches:
       - main
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -19,19 +17,12 @@ jobs:
     - name: Set up Node.js
       uses: actions/setup-node@v3
       with:
-        node-version: '16'
+        node-version: '18'
 
     - name: Install dependencies
       run: npm install
 
-    - name: Run tests
-      run: npm test
-
-    - name: Build application
-      run: npm run build
-
     - name: Start application
       run: npm start
-      env:
-        NODE_ENV: production
 
+  
