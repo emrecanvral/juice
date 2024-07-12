@@ -104,12 +104,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN }}
           GITLEAKS_ENABLE_UPLOAD_ARTIFACT: true
-        with:
-         args: "--report-format sarif --report-path gitleaks.sarif"
-      
+         
+      - name: Unzip Report
+        run: unzip gitleaks-results.sarif.zip
+        
       - name: Upload vulnerability report
         uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif_file: gitleaks.sarif
+          sarif_file: /work/juice/juice/results.sarif
 
     
