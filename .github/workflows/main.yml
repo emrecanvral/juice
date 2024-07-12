@@ -84,6 +84,13 @@ jobs:
         image: "localbuild/juicecase:latest"
         fail-build: false
 
+        
+    - name: Save SARIF results as artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: grype-results
+        path: results.sarif    
+
     - name: Upload vulnerability report
       uses: github/codeql-action/upload-sarif@v2
       with:
