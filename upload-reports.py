@@ -5,9 +5,6 @@ import sys
 file_name = sys.argv[1]
 scan_type = ''
 
-
-elif file_name == 'njsscan.sarif':
-    scan_type = 'SARIF'
 elif file_name == 'semgrep-results.sarif':
     scan_type = 'SARIF'
 elif file_name == 'dependency-check.xml':
