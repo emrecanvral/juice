@@ -5,18 +5,15 @@ import sys
 file_name = sys.argv[1]
 scan_type = ''
 
-if file_name == 'gitleaks.json':
-    scan_type = 'Gitleaks Scan'
+
 elif file_name == 'njsscan.sarif':
     scan_type = 'SARIF'
-elif file_name == 'semgrep-results.json':
-    scan_type = 'Semgrep JSON Report'
-elif file_name == 'zap.xml':
-    scan_type = 'ZAP Scan'
+elif file_name == 'semgrep-results.sarif':
+    scan_type = 'SARIF'
 elif file_name == 'dependency-check.xml':
     scan_type = 'Dependency Check Scan'
-elif file_name == 'greype.json':
-    scan_type = 'Anchore Grype'
+elif file_name == 'results.sarif':
+    scan_type = 'SARIF'
 
 api_token = os.getenv('SCAN_API_TOKEN')
 if not api_token:
