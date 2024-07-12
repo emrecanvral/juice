@@ -65,7 +65,6 @@ jobs:
         if: always()
 
 
-  
   container_scan:
     runs-on: ubuntu-latest
     needs: sast_scan
@@ -77,19 +76,24 @@ jobs:
     - name: Check out the code
       uses: actions/checkout@v4
     - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag localbuild/juice:latest
+      run: docker build . --file Dockerfile --tag localbuild/juicecase:latest
     - name: Run the Anchore Grype scan action
       uses: anchore/scan-action@d5aa5b6cb9414b0c7771438046ff5bcfa2854ed7
       id: scan
       with:
-        image: "localbuild/juice:latest"
+        image: "localbuild/juicecase:latest"
         fail-build: false
-        severity-cutoff: critical
-        
+
     - name: Upload vulnerability report
       uses: github/codeql-action/upload-sarif@v2
       with:
         sarif_file: ${{ steps.scan.outputs.sarif }}
+
+    - name: Save SARIF results as artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{ steps.scan.outputs.sarif }}
+        path: ${{ steps.scan.outputs.sarif }}
 
   secret_scan:
     runs-on: ubuntu-latest
@@ -111,3 +115,5 @@ jobs:
         uses: github/codeql-action/upload-sarif@v2
         with:
           sarif_file: ${{ steps.scan.outputs.sarif }}
+
+    
