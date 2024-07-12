@@ -52,7 +52,12 @@ jobs:
         continue-on-error: true
         run: |
           semgrep -q --sarif --config auto > semgrep-results.json 
-          python3 upload-reports.py semgrep.json
+
+      - name: Run Python script
+        env:
+          SCAN_API_TOKEN: ${{ secrets.SCAN_API_TOKEN }}
+        run: |
+         python3 upload-reports.py semgrep-results.json
       
       - name: Save Json results as artifact
         uses: actions/upload-artifact@v3
