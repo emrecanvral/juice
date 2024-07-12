@@ -105,12 +105,25 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.TOKEN }}
           GITLEAKS_ENABLE_UPLOAD_ARTIFACT: true
          
-      - name: Unzip Report
+      - name: Upload SARIF artifact
+        uses: actions/upload-artifact@v3
+        with:
+         name: gitleaks-results
+         path: gitleaks-results.sarif.zip
+    
+      - name: Download SARIF artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: gitleaks-results
+          path: .
+    
+      - name: Unzip SARIF report
         run: unzip gitleaks-results.sarif.zip
-        
+    
+      - name: List workspace files
+        run: ls -alh
+    
       - name: Upload vulnerability report
         uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif_file: /work/juice/juice/results.sarif
-
-    
+         sarif_file: gitleaks.sarif
