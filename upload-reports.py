@@ -9,7 +9,7 @@ if file_name == 'gitleaks.json':
     scan_type = 'Gitleaks Scan'
 elif file_name == 'njsscan.sarif':
     scan_type = 'SARIF'
-elif file_name == 'semgrep.json':
+elif file_name == 'semgrep-results.json':
     scan_type = 'Semgrep JSON Report'
 elif file_name == 'zap.xml':
     scan_type = 'ZAP Scan'
