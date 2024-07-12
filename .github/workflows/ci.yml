@@ -1,0 +1,111 @@
+name: Juice Shop CI/CD Case2 DevSecOps Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm install
+
+  sast_scan:
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      # required for all workflows
+      security-events: write
+      # only required for workflows in private repositories
+      actions: read
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install semgrep
+        run: |
+          python -m pip install semgrep
+
+      - name: Semgrep Scan
+        continue-on-error: true
+        run: |
+          semgrep -q --sarif --config auto > semgrep-results.json 
+      
+      - name: Save Json results as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: semgrep-scan-results
+          path: semgrep-results.json
+
+   
+
+
+  container_scan:
+    runs-on: ubuntu-latest
+    needs: sast_scan
+    permissions:
+      contents: read # for actions/checkout to fetch code
+      security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
+      actions: read # only required for a private repository by github/codeql-action/upload-sarif to get the Action run status
+    steps:
+    - name: Check out the code
+      uses: actions/checkout@v4
+    - name: Build the Docker image
+      run: docker build . --file Dockerfile --tag localbuild/juicecase:latest
+    - name: Run the Anchore Grype scan action
+      uses: anchore/scan-action@d5aa5b6cb9414b0c7771438046ff5bcfa2854ed7
+      id: scan
+      with:
+        image: "localbuild/juicecase:latest"
+        fail-build: false
+        output-format: 'json'
+        
+    - name: Save scan results to file
+      run: |
+        echo "${{ steps.anchore.outputs.result }}" > scan-results.json
+
+    - name: Upload scan results
+      uses: actions/upload-artifact@v3
+      with:
+        name: scan-results
+        path: scan-results.json
+
+
+  secret_scan:
+    runs-on: ubuntu-latest
+    needs: container_scan
+    permissions:
+      contents: read # for actions/checkout to fetch code
+      security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
+      actions: read # only required for a private repository by github/codeql-action/upload-sarif to get the Action run status
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: true
+         
+
+    
