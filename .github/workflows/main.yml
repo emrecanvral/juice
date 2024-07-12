@@ -107,11 +107,9 @@ jobs:
          
       - name: List workspace files
         run: ls -alh
-    
-      - name: Unzip SARIF report
-        run: unzip gitleaks-results.sarif.zip
+
     
       - name: Upload vulnerability report
         uses: github/codeql-action/upload-sarif@v3
         with:
-         sarif_file: gitleaks.sarif
+         sarif_file: results.sarif
