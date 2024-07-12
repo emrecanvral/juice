@@ -5,7 +5,7 @@ import sys
 file_name = sys.argv[1]
 scan_type = ''
 
-elif file_name == 'semgrep-results.sarif':
+if file_name == 'semgrep-results.sarif':
     scan_type = 'SARIF'
 elif file_name == 'dependency-check.xml':
     scan_type = 'Dependency Check Scan'
