@@ -59,7 +59,7 @@ jobs:
           python upload-reports.py semgrep-results.sarif
       
       - name: Save SARIF results as artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: semgrep-scan-results
           path: semgrep-results.sarif
